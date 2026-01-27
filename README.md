@@ -17,13 +17,19 @@ A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece
 
 ## 📢 Broadcast Messages
 
-Send a message to all 6 bots at once by DM-ing any of them!
+Send messages through DM using a command-based system! Control whether a message goes to all 6 bots or just the one you're messaging.
+
+### Available Commands
+
+- `/all <message>` - Send message from all 6 bots to broadcast channel
+- `/help` - Show this help message with all available commands
+- `<any text>` - Send message only from the bot you're DM-ing
 
 ### How to Use
 
 1. **Configure Broadcast Channel**:
    - Set the `BROADCAST_CHANNEL_ID` in your `.env` file
-   - This is the channel where all bots will send their broadcast messages
+   - This is the channel where bots will send broadcast messages
    - Find the channel ID by right-clicking the channel in Discord → Copy ID
 
 2. **Enable Required Intents**:
@@ -36,15 +42,15 @@ Send a message to all 6 bots at once by DM-ing any of them!
 
 3. **Send a Broadcast**:
    - Open a DM with ANY of the 6 bots (Shaka, Lilith, Edison, Pythagoras, Atlas, or York)
-   - Type your message and send
-   - All 6 bots will simultaneously send your message to the configured channel
-   - You'll receive a confirmation reply: "Broadcast sent to all bots."
+   - Use `/all <message>` to broadcast to all 6 bots
+   - Use regular text to send from just that bot
+   - Use `/help` to see all available commands
    - Bots will then return to their normal status cycling
 
 ### Example
 
 ```
-You → DM Shaka: "Hello everyone!"
+You → DM Shaka: "/all Hello everyone!"
 ↓
 All 6 bots → Send "Hello everyone!" to broadcast channel
 ↓
@@ -57,7 +63,8 @@ All bots → Continue status cycling
 
 - The broadcast channel ID is not sensitive and can be shared
 - Anyone who can DM the bots can trigger broadcasts (no authentication required)
-- Messages are sent simultaneously by all bots
+- Use `/all` prefix to broadcast, regular text for single-bot messages
+- Messages are sent simultaneously by all bots when using `/all`
 - Bots ignore messages they send themselves
 - Invalid channel IDs will be logged to console
 - If BROADCAST_CHANNEL_ID is not set, broadcast functionality will be disabled

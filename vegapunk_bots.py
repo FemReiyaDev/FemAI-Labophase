@@ -9,7 +9,7 @@ from status_messages import STATUS_MESSAGES
 load_dotenv()
 
 bot_instances: dict[str, "VegapunkBot"] = {}
-broadcast_messages: list[tuple[str, str]] = []
+broadcast_messages: list[tuple[str, str, str | None, bool, int]] = []
 broadcast_lock = asyncio.Lock()
 
 BOT_CONFIG = [
@@ -25,11 +25,11 @@ STATUS_CYCLE_INTERVAL = 60
 
 
 class VegapunkBot(discord.Client):
-    def __init__(self, name: str, channel_id: int, *args, **kwargs):
+    def __init__(self, name: str, channel_id: int):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.messages = True
-        super().__init__(intents=intents, *args, **kwargs)
+        super().__init__(intents=intents)
         self.bot_name = name
         self.channel_id = channel_id
         self.status_index = 0
@@ -66,19 +66,61 @@ class VegapunkBot(discord.Client):
             and message.author != self.user
         ):
             message_id = str(uuid.uuid4())
-            async with broadcast_lock:
-                broadcast_messages.append((message_id, message.content))
-            await message.reply("Broadcast sent to all bots.")
+            content = message.content
+
+            if content.lower().startswith("/all "):
+                actual_content = content[5:].strip()
+
+                if actual_content.lower().startswith("/"):
+                    await message.reply("Cannot use commands after /all prefix.")
+                    return
+
+                target_bot_name = None
+                is_all_broadcast = True
+                async with broadcast_lock:
+                    broadcast_messages.append(
+                        (
+                            message_id,
+                            actual_content,
+                            target_bot_name,
+                            is_all_broadcast,
+                            0,
+                        )
+                    )
+                await message.reply("Broadcast sent to all bots.")
+            elif content.lower() == "/help":
+                help_text = """Available Commands:
+/all <message> - Send message from all 6 bots
+/help - Show this help message
+<any text> - Send message only from this bot"""
+                await message.reply(help_text)
+            else:
+                target_bot_name = self.bot_name
+                is_all_broadcast = False
+                async with broadcast_lock:
+                    broadcast_messages.append(
+                        (
+                            message_id,
+                            content,
+                            target_bot_name,
+                            is_all_broadcast,
+                            0,
+                        )
+                    )
+                await message.reply("Message sent.")
 
     async def send_broadcast(self, content: str):
         try:
             channel = self.get_channel(self.channel_id)
             if channel and isinstance(channel, discord.TextChannel):
                 await channel.send(content)
-                print(f"[{self.bot_name}] Broadcast sent to channel {self.channel_id}")
+                print(
+                    f"[{self.bot_name}] Broadcast sent to channel " f"{self.channel_id}"
+                )
             else:
                 print(
-                    f"[{self.bot_name}] ERROR - Invalid channel ID: {self.channel_id}"
+                    f"[{self.bot_name}] ERROR - Invalid channel ID: "
+                    f"{self.channel_id}"
                 )
         except Exception as e:
             print(f"[{self.bot_name}] ERROR sending broadcast: {e}")
@@ -86,10 +128,32 @@ class VegapunkBot(discord.Client):
     @tasks.loop(seconds=1)
     async def check_broadcast(self):
         async with broadcast_lock:
-            for message_id, content in broadcast_messages:
+            for (
+                message_id,
+                content,
+                target_bot_name,
+                is_all_broadcast,
+                processed_count,
+            ) in broadcast_messages:
                 if message_id not in self.processed_message_ids:
-                    await self.send_broadcast(content)
-                    self.processed_message_ids.add(message_id)
+                    if is_all_broadcast or target_bot_name == self.bot_name:
+                        await self.send_broadcast(content)
+                        self.processed_message_ids.add(message_id)
+                        index = next(
+                            i
+                            for i, msg in enumerate(broadcast_messages)
+                            if msg[0] == message_id
+                        )
+                        broadcast_messages[index] = (
+                            message_id,
+                            content,
+                            target_bot_name,
+                            is_all_broadcast,
+                            processed_count + 1,
+                        )
+
+                        if processed_count + 1 >= 6:
+                            broadcast_messages.pop(index)
 
     @check_broadcast.before_loop
     async def before_check_broadcast(self):
