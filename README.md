@@ -13,6 +13,54 @@ A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece
 - **Auto-Cycling**: Statuses automatically change every 60 seconds
 - **Async/Await**: Built with modern Python async patterns
 - **Easy Configuration**: Simple `.env` file setup
+- **Broadcast Messages**: Send messages to all bots simultaneously via DM
+
+## 📢 Broadcast Messages
+
+Send a message to all 6 bots at once by DM-ing any of them!
+
+### How to Use
+
+1. **Configure Broadcast Channel**:
+   - Set the `BROADCAST_CHANNEL_ID` in your `.env` file
+   - This is the channel where all bots will send their broadcast messages
+   - Find the channel ID by right-clicking the channel in Discord → Copy ID
+
+2. **Enable Required Intents**:
+   - Go to [Discord Developer Portal](https://discord.com/developers/applications)
+   - For each bot:
+     - Navigate to "Bot" settings
+     - Enable **Message Content Intent** ✅
+     - Enable **Messages Intent** ✅
+     - Save changes
+
+3. **Send a Broadcast**:
+   - Open a DM with ANY of the 6 bots (Shaka, Lilith, Edison, Pythagoras, Atlas, or York)
+   - Type your message and send
+   - All 6 bots will simultaneously send your message to the configured channel
+   - You'll receive a confirmation reply: "Broadcast sent to all bots."
+   - Bots will then return to their normal status cycling
+
+### Example
+
+```
+You → DM Shaka: "Hello everyone!"
+↓
+All 6 bots → Send "Hello everyone!" to broadcast channel
+↓
+Shaka → DM reply: "Broadcast sent to all bots."
+↓
+All bots → Continue status cycling
+```
+
+### Important Notes
+
+- The broadcast channel ID is not sensitive and can be shared
+- Anyone who can DM the bots can trigger broadcasts (no authentication required)
+- Messages are sent simultaneously by all bots
+- Bots ignore messages they send themselves
+- Invalid channel IDs will be logged to console
+- If BROADCAST_CHANNEL_ID is not set, broadcast functionality will be disabled
 
 ## 👾 The Bots
 
@@ -89,6 +137,8 @@ pip install -r requirements.txt
 3. For each bot:
    - Go to the "Bot" section
    - Enable **Presence Intent** (required for custom status)
+   - Enable **Message Content Intent** (required for broadcast messages)
+   - Enable **Messages Intent** (required for broadcast messages)
    - Generate a bot token
    - Invite the bot to your server
 
@@ -102,6 +152,7 @@ EDISON_TOKEN=your_edison_token_here
 PYTHAGORAS_TOKEN=your_pythagoras_token_here
 ATLAS_TOKEN=your_atlas_token_here
 YORK_TOKEN=your_york_token_here
+BROADCAST_CHANNEL_ID=your_channel_id_here
 ```
 
 ## 🎮 Usage
@@ -145,6 +196,21 @@ STATUS_MESSAGES = {
     # ... other bots
 }
 ```
+
+### Configure Broadcast Channel
+
+Set the broadcast channel in your `.env` file:
+```env
+BROADCAST_CHANNEL_ID=123456789012345678
+```
+
+To find your channel ID:
+1. Open Discord
+2. Right-click on the desired channel
+3. Select "Copy ID"
+4. Paste the ID into your `.env` file
+
+If `BROADCAST_CHANNEL_ID` is not set, the broadcast feature will be disabled.
 
 ## 🛠️ Development
 
