@@ -357,7 +357,7 @@ The bots include comprehensive audit logging to track all security-relevant even
 
 #### Logged Events
 
-The following events are logged to `audit.log`:
+The following events are logged to `logs/audit.log`:
 
 - **DM_RECEIVED**: Every DM received by any bot (with truncated content)
 - **UNAUTHORISED**: Failed authorisation attempts with user details
@@ -377,7 +377,7 @@ Each log entry follows this format:
 
 #### Log Rotation
 
-- **File location**: `audit.log` in the project root
+- **File location**: `logs/audit.log` in the logs directory
 - **Maximum size**: 5MB per log file
 - **Backup files**: 3 backup files (audit.log.1, audit.log.2, audit.log.3)
 - **Rotation**: Automatic rotation when size limit is reached
@@ -399,10 +399,10 @@ Each log entry follows this format:
 You can monitor audit logs in real-time using:
 ```bash
 # Windows (PowerShell)
-Get-Content audit.log -Wait -Tail 20
+Get-Content logs/audit.log -Wait -Tail 20
 
 # Linux/Mac
-tail -f audit.log
+tail -f logs/audit.log
 ```
 
 #### Using Audit Logs for Security
