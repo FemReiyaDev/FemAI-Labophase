@@ -60,6 +60,31 @@ def validate_broadcast_content(content: str) -> tuple[bool, str]:
     return True, content
 
 
+def validate_environment() -> list[str]:
+    """Validate environment and return list of warnings (not errors)."""
+    warnings = []
+
+    if not os.getenv("AUTHORISED_USER_IDS"):
+        warnings.append("WARNING - No AUTHORISED_USER_IDS set - anyone can use bots!")
+
+    if not os.getenv("BROADCAST_CHANNEL_ID"):
+        warnings.append("WARNING - No BROADCAST_CHANNEL_ID found")
+
+    required_tokens = [
+        "SHAKA_TOKEN",
+        "LILITH_TOKEN",
+        "EDISON_TOKEN",
+        "PYTHAGORAS_TOKEN",
+        "ATLAS_TOKEN",
+        "YORK_TOKEN",
+    ]
+    for token in required_tokens:
+        if not os.getenv(token):
+            warnings.append(f"WARNING - No token found in {token}")
+
+    return warnings
+
+
 class VegapunkBot(discord.Client):
     def __init__(self, name: str, channel_id: int):
         intents = discord.Intents.default()
@@ -307,6 +332,15 @@ async def run_bot(name: str, token: str, channel_id: int):
 async def main():
     print("Starting Vegapunk Satellite Bots...")
     print("=" * 50)
+
+    warnings = validate_environment()
+    if warnings:
+        print("\nEnvironment Validation Warnings:")
+        print("-" * 50)
+        for warning in warnings:
+            print(warning)
+        print("-" * 50)
+        print()
 
     broadcast_channel_id = os.getenv("BROADCAST_CHANNEL_ID")
     if not broadcast_channel_id:
