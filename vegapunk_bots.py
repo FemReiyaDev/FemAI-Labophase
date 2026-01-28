@@ -22,6 +22,18 @@ BOT_CONFIG = [
 ]
 
 STATUS_CYCLE_INTERVAL = 60
+MAX_MESSAGE_LENGTH = 2000
+ALLOWED_MENTIONS = discord.AllowedMentions.none()
+
+
+def validate_broadcast_content(content: str) -> tuple[bool, str]:
+    """Validate message content before broadcasting."""
+    content = content.strip()
+    if len(content) == 0:
+        return False, "Message cannot be empty"
+    if len(content) > MAX_MESSAGE_LENGTH:
+        return False, f"Message too long (max {MAX_MESSAGE_LENGTH} characters)"
+    return True, content
 
 
 class VegapunkBot(discord.Client):
@@ -75,6 +87,11 @@ class VegapunkBot(discord.Client):
                     await message.reply("Cannot use commands after /all prefix.")
                     return
 
+                valid, result = validate_broadcast_content(actual_content)
+                if not valid:
+                    await message.reply(f"Invalid message: {result}")
+                    return
+
                 target_bot_name = None
                 is_all_broadcast = True
                 async with broadcast_lock:
@@ -95,6 +112,11 @@ class VegapunkBot(discord.Client):
 <any text> - Send message only from this bot"""
                 await message.reply(help_text)
             else:
+                valid, result = validate_broadcast_content(content)
+                if not valid:
+                    await message.reply(f"Invalid message: {result}")
+                    return
+
                 target_bot_name = self.bot_name
                 is_all_broadcast = False
                 async with broadcast_lock:
@@ -109,21 +131,25 @@ class VegapunkBot(discord.Client):
                     )
                 await message.reply("Message sent.")
 
-    async def send_broadcast(self, content: str):
+    async def send_broadcast(self, content: str) -> bool:
         try:
+            valid, result = validate_broadcast_content(content)
+            if not valid:
+                print(f"[{self.bot_name}] Invalid message: {result}")
+                return False
             channel = self.get_channel(self.channel_id)
             if channel and isinstance(channel, discord.TextChannel):
-                await channel.send(content)
-                print(
-                    f"[{self.bot_name}] Broadcast sent to channel " f"{self.channel_id}"
-                )
+                await channel.send(result, allowed_mentions=ALLOWED_MENTIONS)
+                print(f"[{self.bot_name}] Broadcast sent to channel {self.channel_id}")
+                return True
             else:
                 print(
-                    f"[{self.bot_name}] ERROR - Invalid channel ID: "
-                    f"{self.channel_id}"
+                    f"[{self.bot_name}] ERROR - Invalid channel ID: {self.channel_id}"
                 )
+                return False
         except Exception as e:
             print(f"[{self.bot_name}] ERROR sending broadcast: {e}")
+            return False
 
     @tasks.loop(seconds=1)
     async def check_broadcast(self):

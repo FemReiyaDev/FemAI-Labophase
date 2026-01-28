@@ -255,10 +255,56 @@ FemAI-Labophase/
 
 ## 🔐 Security
 
+### Token Management
+
 - **NEVER** commit `.env` files to version control
 - **NEVER** share bot tokens publicly
 - Regenerate tokens immediately if exposed
 - The `.env` file is already in `.gitignore`
+
+### Input Validation
+
+The bots include comprehensive input validation to prevent abuse:
+
+#### Message Length Limits
+
+- **MAX_MESSAGE_LENGTH**: 2000 characters (Discord's API limit)
+- Messages exceeding this limit are rejected before sending
+- Empty messages are automatically filtered out
+
+#### Mention Protection
+
+- **ALLOWED_MENTIONS**: All Discord mentions are blocked by default
+- `@everyone` and `@here` mentions are automatically disabled
+- User and role mentions are prevented from expanding
+- This prevents spam and abuse through broadcast messages
+
+#### Content Validation
+
+- The `validate_broadcast_content()` function checks all broadcast messages
+- Validates message length before sending
+- Filters empty or whitespace-only messages
+- Returns descriptive error messages for invalid content
+
+### How It Works
+
+```python
+# Example of security in action
+async def send_broadcast(self, content: str) -> bool:
+    valid, result = validate_broadcast_content(content)
+    if not valid:
+        return False
+    
+    # allowed_mentions prevents @everyone abuse
+    await channel.send(content, allowed_mentions=ALLOWED_MENTIONS)
+```
+
+### Best Practices
+
+- Keep bot tokens secure and rotate them periodically
+- Monitor broadcast channel for unusual activity
+- Review audit logs (if enabled) for security incidents
+- Be cautious who has access to DM your bots
 
 ## 📝 License
 
