@@ -1,3 +1,5 @@
+@echo off
+
 REM Activate virtual environment
 call venv\Scripts\activate
 

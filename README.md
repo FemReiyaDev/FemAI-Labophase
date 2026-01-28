@@ -351,12 +351,77 @@ async def send_broadcast(self, content: str) -> bool:
     await channel.send(content, allowed_mentions=ALLOWED_MENTIONS)
 ```
 
-### Best Practices
+### Audit Trail
+
+The bots include comprehensive audit logging to track all security-relevant events:
+
+#### Logged Events
+
+The following events are logged to `audit.log`:
+
+- **DM_RECEIVED**: Every DM received by any bot (with truncated content)
+- **UNAUTHORISED**: Failed authorisation attempts with user details
+- **RATE_LIMIT_VIOLATION**: Users exceeding rate limits
+- **VALIDATION_FAILURE**: Failed input validation with reason
+- **BROADCAST_COMMAND**: Successful `/all` broadcast commands
+- **SINGLE_BOT_COMMAND**: Successful single-bot messages
+- **BROADCAST_SENT**: Successful broadcasts to the channel
+- **BROADCAST_FAILURE**: Failed broadcasts with error details
+
+#### Log Format
+
+Each log entry follows this format:
+```
+2025-01-28 10:30:45,123 | EVENT_TYPE | BotName | UserName(UserID) | Additional Details
+```
+
+#### Log Rotation
+
+- **File location**: `audit.log` in the project root
+- **Maximum size**: 5MB per log file
+- **Backup files**: 3 backup files (audit.log.1, audit.log.2, audit.log.3)
+- **Rotation**: Automatic rotation when size limit is reached
+- **Total storage**: Maximum 20MB (current + 3 backups)
+
+#### Example Log Entries
+
+```
+2025-01-28 10:30:45,123 | DM_RECEIVED | Shaka | UserA(123456789) | Content: /all Hello everyone
+2025-01-28 10:30:45,456 | BROADCAST_COMMAND | Shaka | UserA(123456789) | All bots | Content: /all Hello everyone
+2025-01-28 10:31:12,789 | BROADCAST_SENT | Shaka | Channel: 987654321 | Content: /all Hello everyone
+2025-01-28 10:35:00,000 | UNAUTHORISED | Lilith | UserB(987654321)
+2025-01-28 10:36:30,456 | RATE_LIMIT_VIOLATION | Pythagoras | UserC(555555555)
+2025-01-28 10:37:15,789 | VALIDATION_FAILURE | Atlas | UserD(111111111) | Reason: Message too long
+```
+
+#### Monitoring the Logs
+
+You can monitor audit logs in real-time using:
+```bash
+# Windows (PowerShell)
+Get-Content audit.log -Wait -Tail 20
+
+# Linux/Mac
+tail -f audit.log
+```
+
+#### Using Audit Logs for Security
+
+The audit trail helps you:
+
+- **Track user activity**: See who sent what messages and when
+- **Detect suspicious behaviour**: Identify unauthorised access attempts
+- **Troubleshoot issues**: Debug failed broadcasts or validation errors
+- **Compliance**: Maintain a record of all bot interactions
+- **Forensic analysis**: Investigate security incidents after they occur
+
+#### Best Practices
 
 - Keep bot tokens secure and rotate them periodically
 - Monitor broadcast channel for unusual activity
-- Review audit logs (if enabled) for security incidents
+- Review audit logs regularly for security incidents
 - Be cautious who has access to DM your bots
+- Archive old audit logs for long-term storage if needed
 
 ## 📝 License
 
