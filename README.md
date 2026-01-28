@@ -304,6 +304,16 @@ The bots include authorisation to control who can trigger broadcasts:
 - Regenerate tokens immediately if exposed
 - The `.env` file is already in `.gitignore`
 
+### Rate Limiting
+
+The bots include rate limiting to prevent spam and abuse:
+
+- **MAX_MESSAGES_PER_MINUTE**: 25 messages per user per minute
+- Each user's message timestamps are tracked in a sliding window
+- Messages older than 60 seconds are automatically removed from tracking
+- Thread-safe implementation using `asyncio.Lock` for concurrent bot access
+- Users exceeding the rate limit receive a clear error message
+
 ### Input Validation
 
 The bots include comprehensive input validation to prevent abuse:

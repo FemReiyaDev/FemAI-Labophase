@@ -1,7 +1,3 @@
-@echo off
-echo Starting Vegapunk Discord Bots...
-echo.
-
 REM Activate virtual environment
 call venv\Scripts\activate
 

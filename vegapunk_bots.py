@@ -1,9 +1,13 @@
 import os
+import time
 import asyncio
 import uuid
+from collections import defaultdict
+
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
+
 from status_messages import STATUS_MESSAGES
 
 load_dotenv()
@@ -11,6 +15,10 @@ load_dotenv()
 bot_instances: dict[str, "VegapunkBot"] = {}
 broadcast_messages: list[tuple[str, str, str | None, bool, int]] = []
 broadcast_lock = asyncio.Lock()
+
+MAX_MESSAGES_PER_MINUTE = 25
+MESSAGE_TRACKER: dict[int, list[float]] = defaultdict(list)
+rate_limit_lock = asyncio.Lock()
 
 AUTHORISED_USER_IDS: set[int] = set()
 _auth_ids = os.getenv("AUTHORISED_USER_IDS", "")
@@ -55,6 +63,16 @@ class VegapunkBot(discord.Client):
         self.messages = STATUS_MESSAGES.get(name, ["Online"])
         self.processed_message_ids: set[str] = set()
 
+    async def check_rate_limit(self, user_id: int) -> bool:
+        async with rate_limit_lock:
+            now = time.time()
+            user_messages = MESSAGE_TRACKER[user_id]
+            user_messages[:] = [t for t in user_messages if now - t < 60]
+            if len(user_messages) >= MAX_MESSAGES_PER_MINUTE:
+                return False
+            user_messages.append(now)
+            return True
+
     async def setup_hook(self):
         self.cycle_status.start()
         self.check_broadcast.start()
@@ -89,6 +107,12 @@ class VegapunkBot(discord.Client):
                 print(
                     f"[{self.bot_name}] Unauthorised: "
                     f"{message.author.name} ({message.author.id})"
+                )
+                return
+
+            if not await self.check_rate_limit(message.author.id):
+                await message.reply(
+                    "Rate limit exceeded. Please wait before sending more messages."
                 )
                 return
 
