@@ -251,6 +251,51 @@ To find your channel ID:
 
 If `BROADCAST_CHANNEL_ID` is not set, the broadcast feature will be disabled.
 
+### Environment Validation
+
+The bots include automatic environment validation on startup to help identify configuration issues:
+
+#### How It Works
+
+- **Non-blocking**: Warnings are displayed but bots continue to start
+- **Comprehensive**: Checks all required environment variables
+- **Helpful**: Provides clear messages about missing configuration
+
+#### Validated Settings
+
+The following environment variables are validated:
+
+- `AUTHORISED_USER_IDS`: Warns if not set (security risk)
+- `BROADCAST_CHANNEL_ID`: Warns if not set (broadcast disabled)
+- All bot tokens (`SHAKA_TOKEN`, `LILITH_TOKEN`, `EDISON_TOKEN`, `PYTHAGORAS_TOKEN`, `ATLAS_TOKEN`, `YORK_TOKEN`): Warns if missing
+
+#### Example Output
+
+```
+Environment Validation Warnings:
+--------------------------------------------------
+WARNING - No AUTHORISED_USER_IDS set - anyone can use bots!
+WARNING - No token found in YORK_TOKEN
+--------------------------------------------------
+```
+
+#### Warning Messages
+
+The following warnings may be displayed:
+
+| Warning | Description |
+|---------|-------------|
+| "No AUTHORISED_USER_IDS set - anyone can use bots!" | Authorisation is disabled, any user can use the bots |
+| "No BROADCAST_CHANNEL_ID found" | Broadcast functionality will be disabled |
+| "No token found in <TOKEN_NAME>" | Specific bot token is missing from .env file |
+
+#### Best Practices
+
+- Fix warnings before deploying to production
+- Set `AUTHORISED_USER_IDS` to restrict access to authorised users only
+- Ensure all bot tokens are present for full functionality
+- Keep the broadcast channel ID configured for message broadcasting
+
 ## 🛠️ Development
 
 ### Code Style
