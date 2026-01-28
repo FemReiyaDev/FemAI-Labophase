@@ -3,5 +3,4 @@ AGENTS.md
 venv/
 __pycache__/
 *.pyc
-audit.log
-audit.log.*
+logs/

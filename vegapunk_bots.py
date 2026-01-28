@@ -16,7 +16,8 @@ load_dotenv()
 
 audit_logger = logging.getLogger("vegapunk.audit")
 audit_logger.setLevel(logging.INFO)
-handler = RotatingFileHandler("audit.log", maxBytes=5_000_000, backupCount=3)
+os.makedirs("logs", exist_ok=True)
+handler = RotatingFileHandler("logs/audit.log", maxBytes=5_000_000, backupCount=3)
 handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s"))
 audit_logger.addHandler(handler)
 
