@@ -15,6 +15,36 @@ A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece
 - **Easy Configuration**: Simple `.env` file setup
 - **Broadcast Messages**: Send messages to all bots simultaneously via DM
 
+## 🔐 Authorisation
+
+### Configuring Authorised Users
+
+To control who can use the bots, set the `AUTHORISED_USER_IDS` environment variable in your `.env` file:
+
+```env
+AUTHORISED_USER_IDS=123456789012345678,987654321098765432
+```
+
+**Important notes:**
+- Use comma-separated Discord user IDs (numeric IDs only)
+- If `AUTHORISED_USER_IDS` is empty or not set, **any user can use the bots** (default for testing)
+- Set this in production to restrict access to authorised users only
+
+### Finding Discord User IDs
+
+1. Open Discord
+2. Enable **Developer Mode**:
+   - Go to **Settings** → **Advanced** → Toggle on **Developer Mode**
+3. Right-click on any user and select **Copy ID**
+4. Paste the ID into your `.env` file
+
+### How It Works
+
+- When a user DMs a bot, their Discord user ID is checked against `AUTHORISED_USER_IDS`
+- If the ID is in the list (or the list is empty), the user can proceed with commands
+- If not authorised, the bot replies: "You are not authorised to use this bot."
+- Unauthorised attempts are logged to the console with user details
+
 ## 📢 Broadcast Messages
 
 Send messages through DM using a command-based system! Control whether a message goes to all 6 bots or just the one you're messaging.
@@ -62,7 +92,8 @@ All bots → Continue status cycling
 ### Important Notes
 
 - The broadcast channel ID is not sensitive and can be shared
-- Anyone who can DM the bots can trigger broadcasts (no authentication required)
+- Users must be authorised (via `AUTHORISED_USER_IDS`) to trigger broadcasts
+- If `AUTHORISED_USER_IDS` is empty, anyone who can DM the bots can use them (for testing)
 - Use `/all` prefix to broadcast, regular text for single-bot messages
 - Messages are sent simultaneously by all bots when using `/all`
 - Bots ignore messages they send themselves
@@ -160,6 +191,7 @@ PYTHAGORAS_TOKEN=your_pythagoras_token_here
 ATLAS_TOKEN=your_atlas_token_here
 YORK_TOKEN=your_york_token_here
 BROADCAST_CHANNEL_ID=your_channel_id_here
+AUTHORISED_USER_IDS=123456789012345678,987654321098765432
 ```
 
 ## 🎮 Usage
@@ -222,7 +254,7 @@ If `BROADCAST_CHANNEL_ID` is not set, the broadcast feature will be disabled.
 ## 🛠️ Development
 
 ### Code Style
-This project follows the guidelines in `AGENTS.md`:
+This project follows the guidelines:
 - Black for code formatting
 - flake8 for linting
 - mypy for type checking
@@ -254,6 +286,16 @@ FemAI-Labophase/
 | Import errors | Make sure virtual environment is activated |
 
 ## 🔐 Security
+
+### Authorisation
+
+The bots include authorisation to control who can trigger broadcasts:
+
+- **AUTHORISED_USER_IDS**: Comma-separated list of authorised Discord user IDs
+- Users must be in this list to use bot commands via DM
+- If empty, any user can use the bots (useful for testing, but set in production!)
+- Unauthorised users receive a clear error message and are logged
+- Authorisation checks are performed on every command attempt
 
 ### Token Management
 

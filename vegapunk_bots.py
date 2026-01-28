@@ -12,6 +12,13 @@ bot_instances: dict[str, "VegapunkBot"] = {}
 broadcast_messages: list[tuple[str, str, str | None, bool, int]] = []
 broadcast_lock = asyncio.Lock()
 
+AUTHORISED_USER_IDS: set[int] = set()
+_auth_ids = os.getenv("AUTHORISED_USER_IDS", "")
+if _auth_ids:
+    AUTHORISED_USER_IDS.update(
+        int(uid.strip()) for uid in _auth_ids.split(",") if uid.strip()
+    )
+
 BOT_CONFIG = [
     ("Shaka", "SHAKA_TOKEN"),
     ("Lilith", "LILITH_TOKEN"),
@@ -77,6 +84,14 @@ class VegapunkBot(discord.Client):
             isinstance(message.channel, discord.DMChannel)
             and message.author != self.user
         ):
+            if AUTHORISED_USER_IDS and message.author.id not in AUTHORISED_USER_IDS:
+                await message.reply("You are not authorised to use this bot.")
+                print(
+                    f"[{self.bot_name}] Unauthorised: "
+                    f"{message.author.name} ({message.author.id})"
+                )
+                return
+
             message_id = str(uuid.uuid4())
             content = message.content
 
