@@ -1,4 +1,4 @@
-# 🤖 Vegapunk Discord Bots
+# Vegapunk Discord Bots
 
 A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece. Each bot cycles through themed status messages that reflect their unique personalities!
 
@@ -6,7 +6,7 @@ A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece
 ![discord.py](https://img.shields.io/badge/discord.py-2.6.4-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🌟 Features
+## Features
 
 - **6 Unique Bots**: Shaka, Lilith, Edison, Pythagoras, Atlas, and York
 - **Themed Status Messages**: Each bot has 5 personality-driven status messages
@@ -15,7 +15,7 @@ A collection of 6 Discord bots themed after Vegapunk's satellites from One Piece
 - **Easy Configuration**: Simple `.env` file setup
 - **Broadcast Messages**: Send messages to all bots simultaneously via DM
 
-## 🔐 Authorisation
+## Authorisation
 
 ### Configuring Authorised Users
 
@@ -45,7 +45,7 @@ AUTHORISED_USER_IDS=123456789012345678,987654321098765432
 - If not authorised, the bot replies: "You are not authorised to use this bot."
 - Unauthorised attempts are logged to the console with user details
 
-## 📢 Broadcast Messages
+## Broadcast Messages
 
 Send messages through DM using a command-based system! Control whether a message goes to all 6 bots or just the one you're messaging.
 
@@ -66,8 +66,8 @@ Send messages through DM using a command-based system! Control whether a message
    - Go to [Discord Developer Portal](https://discord.com/developers/applications)
    - For each bot:
      - Navigate to "Bot" settings
-     - Enable **Message Content Intent** ✅
-     - Enable **Messages Intent** ✅
+     - Enable **Message Content Intent**
+     - Enable **Messages Intent**
      - Save changes
 
 3. **Send a Broadcast**:
@@ -100,7 +100,7 @@ All bots → Continue status cycling
 - Invalid channel IDs will be logged to console
 - If BROADCAST_CHANNEL_ID is not set, broadcast functionality will be disabled
 
-## 👾 The Bots
+## The Bots
 
 ### Shaka (The Good - Wisdom/Ethics)
 - "Taking meeting notes diligently."
@@ -144,7 +144,7 @@ All bots → Continue status cycling
 - "Didn't see anything. Was eating."
 - "Supervising. From the couch. With snacks."
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -194,7 +194,7 @@ BROADCAST_CHANNEL_ID=your_channel_id_here
 AUTHORISED_USER_IDS=123456789012345678,987654321098765432
 ```
 
-## 🎮 Usage
+## Usage
 
 ### Quick Start (Windows)
 Double-click `run.bat` or run from command line:
@@ -214,7 +214,7 @@ python vegapunk_bots.py
 ### Stop the Bots
 Press `Ctrl+C` in the terminal to stop all bots gracefully.
 
-## ⚙️ Configuration
+## Configuration
 
 ### Customize Status Cycle Interval
 
@@ -296,7 +296,7 @@ The following warnings may be displayed:
 - Ensure all bot tokens are present for full functionality
 - Keep the broadcast channel ID configured for message broadcasting
 
-## 🛠️ Development
+## Development
 
 ### Code Style
 This project follows the guidelines:
@@ -309,7 +309,7 @@ This project follows the guidelines:
 black . && flake8 . && mypy .
 ```
 
-## 📁 Project Structure
+## Project Structure
 ```
 FemAI-Labophase/
 ├── vegapunk_bots.py      # Main bot runner
@@ -321,7 +321,7 @@ FemAI-Labophase/
 └── README.md            # This file
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -330,7 +330,7 @@ FemAI-Labophase/
 | Status not updating | Ensure discord.py 2.0+ is installed |
 | Import errors | Make sure virtual environment is activated |
 
-## 🔐 Security
+## Security
 
 ### Authorisation
 
@@ -395,6 +395,50 @@ async def send_broadcast(self, content: str) -> bool:
     # allowed_mentions prevents @everyone abuse
     await channel.send(content, allowed_mentions=ALLOWED_MENTIONS)
 ```
+
+### Queue Management
+
+The broadcast message queue includes automatic size management to prevent memory exhaustion:
+
+#### Bounded Queue
+
+- **MAX_QUEUE_SIZE**: Maximum of 100 messages in the queue
+- Uses an in-memory `list` queue for pending broadcast tuples
+- New messages are rejected once the queue reaches the limit
+
+#### FIFO (First In, First Out) Behaviour
+
+- Messages are processed in the order they are received
+- Oldest messages are handled first
+- Existing queued messages are not dropped when full
+- Users must retry when capacity is available
+
+#### Backpressure on Full Queue
+
+- If full, bots reply: `Queue is full. Please try again later.`
+- This prevents unbounded growth and preserves already-queued work
+- Capacity is recovered as queued messages are processed
+
+#### How It Works
+
+```python
+MAX_QUEUE_SIZE = 100
+broadcast_messages: list[BroadcastMessage] = []
+
+if len(broadcast_messages) >= MAX_QUEUE_SIZE:
+    await message.reply("Queue is full. Please try again later.")
+    return
+
+# Add message when queue has capacity
+broadcast_messages.append((message_id, content, target, is_all, 0))
+```
+
+#### Benefits
+
+- **Memory Safety**: Queue cannot grow indefinitely, preventing memory exhaustion
+- **Queue Integrity**: Pending messages are not silently discarded
+- **Predictable Performance**: Consistent memory usage regardless of message volume
+- **Clear Feedback**: Users get an immediate retry message when full
 
 ### Audit Trail
 
@@ -468,18 +512,18 @@ The audit trail helps you:
 - Be cautious who has access to DM your bots
 - Archive old audit logs for long-term storage if needed
 
-## 📝 License
+## License
 
 This project is open source and available under the MIT License.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 🌐 Inspiration
+## Inspiration
 
 Inspired by Vegapunk's satellites from the anime/manga **One Piece** by Eiichiro Oda. Each bot embodies the unique personality and traits of these brilliant artificial intelligences.
 
 ---
 
-Made with ❤️ by [FemReiyaDev](https://github.com/FemReiyaDev)
+Made by [FemReiyaDev](https://github.com/FemReiyaDev)

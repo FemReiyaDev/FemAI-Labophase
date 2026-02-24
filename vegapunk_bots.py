@@ -21,11 +21,16 @@ handler = RotatingFileHandler("logs/audit.log", maxBytes=5_000_000, backupCount=
 handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s"))
 audit_logger.addHandler(handler)
 
-bot_instances: dict[str, "VegapunkBot"] = {}
-broadcast_messages: list[tuple[str, str, str | None, bool, int]] = []
-broadcast_lock = asyncio.Lock()
-
 MAX_MESSAGES_PER_MINUTE = 25
+STATUS_CYCLE_INTERVAL = 60
+MAX_QUEUE_SIZE = 100
+MAX_MESSAGE_LENGTH = 2000
+ALLOWED_MENTIONS = discord.AllowedMentions.none()
+BroadcastMessage = tuple[str, str, str | None, bool, int]
+
+bot_instances: dict[str, "VegapunkBot"] = {}
+broadcast_messages: list[BroadcastMessage] = []
+broadcast_lock = asyncio.Lock()
 MESSAGE_TRACKER: dict[int, list[float]] = defaultdict(list)
 rate_limit_lock = asyncio.Lock()
 
@@ -44,10 +49,6 @@ BOT_CONFIG = [
     ("Atlas", "ATLAS_TOKEN"),
     ("York", "YORK_TOKEN"),
 ]
-
-STATUS_CYCLE_INTERVAL = 60
-MAX_MESSAGE_LENGTH = 2000
-ALLOWED_MENTIONS = discord.AllowedMentions.none()
 
 
 def validate_broadcast_content(content: str) -> tuple[bool, str]:
@@ -200,6 +201,9 @@ class VegapunkBot(discord.Client):
                 target_bot_name = None
                 is_all_broadcast = True
                 async with broadcast_lock:
+                    if len(broadcast_messages) >= MAX_QUEUE_SIZE:
+                        await message.reply("Queue is full. Please try again later.")
+                        return
                     broadcast_messages.append(
                         (
                             message_id,
@@ -236,6 +240,9 @@ class VegapunkBot(discord.Client):
                 target_bot_name = self.bot_name
                 is_all_broadcast = False
                 async with broadcast_lock:
+                    if len(broadcast_messages) >= MAX_QUEUE_SIZE:
+                        await message.reply("Queue is full. Please try again later.")
+                        return
                     broadcast_messages.append(
                         (
                             message_id,
@@ -298,21 +305,29 @@ class VegapunkBot(discord.Client):
                     if is_all_broadcast or target_bot_name == self.bot_name:
                         await self.send_broadcast(content)
                         self.processed_message_ids.add(message_id)
-                        index = next(
-                            i
-                            for i, msg in enumerate(broadcast_messages)
-                            if msg[0] == message_id
-                        )
-                        broadcast_messages[index] = (
-                            message_id,
-                            content,
-                            target_bot_name,
-                            is_all_broadcast,
-                            processed_count + 1,
-                        )
 
-                        if processed_count + 1 >= 6:
+                        new_processed_count = processed_count + 1
+
+                        if new_processed_count >= 6:
+                            index = next(
+                                i
+                                for i, msg in enumerate(broadcast_messages)
+                                if msg[0] == message_id
+                            )
                             broadcast_messages.pop(index)
+                        else:
+                            index = next(
+                                i
+                                for i, msg in enumerate(broadcast_messages)
+                                if msg[0] == message_id
+                            )
+                            broadcast_messages[index] = (
+                                message_id,
+                                content,
+                                target_bot_name,
+                                is_all_broadcast,
+                                new_processed_count,
+                            )
 
     @check_broadcast.before_loop
     async def before_check_broadcast(self):
